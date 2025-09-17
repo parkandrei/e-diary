@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Электронный дневник</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="login-screen">
+    <h2>Вход</h2>
+    <input type="text" id="username" placeholder="Логин"><br>
+    <input type="password" id="password" placeholder="Пароль"><br>
+    <button onclick="login()">Войти</button>
+    <p id="login-error"></p>
+  </div>
+
+  <div id="diary-screen" style="display:none;">
+    <h2 id="welcome"></h2>
+    <button onclick="logout()">Выйти</button>
+    <div id="admin-panel" style="display:none;">
+      <h3>Добавить посещение</h3>
+      <input type="number" id="visit" placeholder="Посещение (0/1)">
+      <input type="number" id="activity" placeholder="Активность (0/1)">
+      <input type="number" id="behavior" placeholder="Поведение (0/1)">
+      <input type="number" id="poem" placeholder="Стих (0/1)">
+      <button onclick="addVisit()">Добавить</button>
+    </div>
+    <div id="visits"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

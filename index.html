@@ -2,30 +2,219 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Электронный дневник</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="login-screen">
-    <h2>Вход</h2>
-    <input type="text" id="username" placeholder="Логин"><br>
-    <input type="password" id="password" placeholder="Пароль"><br>
-    <button onclick="login()">Войти</button>
-    <p id="login-error"></p>
-  </div>
-
-  <div id="diary-screen" style="display:none;">
-    <h2 id="welcome"></h2>
-    <button onclick="logout()">Выйти</button>
-    <div id="admin-panel" style="display:none;">
-      <h3>Добавить посещение</h3>
-      <input type="number" id="visit" placeholder="Посещение (0/1)">
-      <input type="number" id="activity" placeholder="Активность (0/1)">
-      <input type="number" id="behavior" placeholder="Поведение (0/1)">
-      <input type="number" id="poem" placeholder="Стих (0/1)">
-      <button onclick="addVisit()">Добавить</button>
+  <div class="container">
+    <div id="loginScreen" class="auth-card">
+      <h2 class="auth-title">Вход в систему</h2>
+      <div class="form-group">
+        <label for="login">Логин:</label>
+        <input id="login" class="form-input" placeholder="Введите ваш логин">
+      </div>
+      <div class="form-group">
+        <label for="password">Пароль:</label>
+        <input id="password" type="password" class="form-input" placeholder="Введите ваш пароль">
+      </div>
+      <button class="btn-primary" onclick="login()">Войти</button>
+      <div id="loginError" class="error-message"></div>
     </div>
-    <div id="visits"></div>
+
+    <div id="app" class="hidden main-container">
+      <header class="app-header">
+        <h2 id="userTitle" class="app-title"></h2>
+        <button class="btn-logout" onclick="logout()">Выйти</button>
+      </header>
+
+      <div id="childSelector" class="hidden card">
+        <div class="form-group">
+          <label for="selectChild">Выберите ребенка:</label>
+          <select id="selectChild" class="form-select"></select>
+        </div>
+      </div>
+
+      <div id="childCard" class="hidden card">
+        <h3 class="card-title">Карточка ребенка</h3>
+        <div class="card-content">
+          <div class="child-photo-container">
+            <img id="childPhoto" src="" alt="Фото ребенка" class="child-photo">
+            <div id="photoUpload" class="hidden photo-upload">
+              <input type="file" id="photoInput" accept="image/*" class="hidden">
+              <button class="btn-upload" onclick="document.getElementById('photoInput').click()">Загрузить фото</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Имя:</span>
+            <span id="childName" class="info-value"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Фамилия:</span>
+            <span id="childSurname" class="info-value"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Отчество:</span>
+            <span id="childPatronymic" class="info-value"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Дата рождения:</span>
+            <span id="childDOB" class="info-value"></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Сумма баллов:</span>
+            <span id="childScore" class="info-value score-value"></span>
+          </div>
+        </div>
+        <button id="editChildBtn" class="hidden btn-edit" onclick="showEditForm()">Редактировать карточку</button>
+      </div>
+
+      <div id="editChildForm" class="hidden card">
+        <h3 class="card-title">Редактирование карточки</h3>
+        <div class="form-group">
+          <label for="editName">Имя:</label>
+          <input id="editName" class="form-input" placeholder="Имя">
+        </div>
+        <div class="form-group">
+          <label for="editSurname">Фамилия:</label>
+          <input id="editSurname" class="form-input" placeholder="Фамилия">
+        </div>
+        <div class="form-group">
+          <label for="editPatronymic">Отчество:</label>
+          <input id="editPatronymic" class="form-input" placeholder="Отчество">
+        </div>
+        <div class="form-group">
+          <label for="editDOB">Дата рождения:</label>
+          <input id="editDOB" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="editRole">Роль:</label>
+          <select id="editRole" class="form-select">
+            <option value="parent">Родитель</option>
+            <option value="admin">Воспитатель</option>
+            <option value="superadmin">Супер-админ</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="saveChildEdit()">Сохранить</button>
+          <button class="btn-cancel" onclick="cancelChildEdit()">Отмена</button>
+        </div>
+      </div>
+
+      <div id="adminForm" class="hidden card">
+        <h3 class="card-title">Добавить посещение</h3>
+        <form id="visitForm" class="visit-form">
+          <div class="form-group">
+            <label for="visitDate">Дата:</label>
+            <input type="date" id="visitDate" class="form-input" required>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gradeVisit" class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              Посещение
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gradeActivity" class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              Активность
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gradeBehavior" class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              Поведение
+            </label>
+          </div>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gradePoem" class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              Стих
+            </label>
+          </div>
+          <button type="submit" class="btn-primary">Добавить</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">История посещений</h3>
+        <div class="table-responsive">
+          <table id="visitsTable" class="data-table">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Оценки</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="userManagement" class="hidden card">
+        <h3 class="card-title">Управление пользователями</h3>
+        <div id="userList" class="user-list"></div>
+
+        <div id="passwordEdit" class="hidden card nested-card">
+          <h4 class="subtitle">Изменить пароль</h4>
+          <div class="form-group">
+            <span class="info-label">Логин:</span>
+            <span id="editUserId" class="info-value"></span>
+          </div>
+          <div class="form-group">
+            <label for="newPassword">Новый пароль:</label>
+            <input id="newPassword" type="password" class="form-input" placeholder="Введите новый пароль">
+          </div>
+          <button class="btn-save" onclick="saveNewPassword()">Сохранить</button>
+        </div>
+
+        <div class="card nested-card">
+          <h4 class="subtitle">Создать пользователя</h4>
+          <form id="createUserForm" class="user-form">
+            <div class="form-group">
+              <label for="newLogin">Логин:</label>
+              <input id="newLogin" class="form-input" placeholder="Введите логин" required>
+            </div>
+            <div class="form-group">
+              <label for="newUserPassword">Пароль:</label>
+              <input id="newUserPassword" type="password" class="form-input" placeholder="Введите пароль" required>
+            </div>
+            <div class="form-group">
+              <label for="newUserName">Имя:</label>
+              <input id="newUserName" class="form-input" placeholder="Введите имя" required>
+            </div>
+            <div class="form-group">
+              <label for="newUserRole">Роль:</label>
+              <select id="newUserRole" class="form-select" onchange="toggleParentFields()">
+                <option value="parent">Родитель</option>
+                <option value="admin">Воспитатель</option>
+                <option value="superadmin">Супер-админ</option>
+              </select>
+            </div>
+            <div id="parentExtraFields" class="hidden">
+              <div class="form-group">
+                <label for="newUserSurname">Фамилия:</label>
+                <input id="newUserSurname" class="form-input" placeholder="Введите фамилию">
+              </div>
+              <div class="form-group">
+                <label for="newUserPatronymic">Отчество:</label>
+                <input id="newUserPatronymic" class="form-input" placeholder="Введите отчество">
+              </div>
+              <div class="form-group">
+                <label for="newUserDOB">Дата рождения:</label>
+                <input id="newUserDOB" type="date" class="form-input">
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">Создать пользователя</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="script.js"></script>

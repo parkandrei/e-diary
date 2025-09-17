@@ -1,82 +1,161 @@
-// Замените API_URL на адрес вашего Replit
-const API_URL = "https://acckids-parkandrei.replit.app/data.json"; 
+// Новый script.js с хранением всех данных на сервере
 
-let currentUser = null;
-let currentRole = null;
-let allData = { users: {}, visits: {} };
+const API_URL = "https://e-diary-backend-hu2c.onrender.com/data.json";
 
-// Загрузка данных
+let data = {
+  users: {},
+  visits: {}
+};
+
+let currentUser = "";
+let currentRole = "";
+
 async function loadData() {
   const res = await fetch(API_URL);
-  allData = await res.json();
+  data = await res.json();
 }
 
-// Сохранение данных
 async function saveData() {
   await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(allData)
+    body: JSON.stringify(data)
   });
 }
 
-// Вход
-async function login() {
-  await loadData();
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
+function login() {
+  const login = document.getElementById("login").value;
+  const password = document.getElementById("password").value;
+  const user = data.users[login];
+  const errorBox = document.getElementById("loginError");
 
-  if (allData.users[u] && allData.users[u].password === p) {
-    currentUser = u;
-    currentRole = allData.users[u].role;
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("diary-screen").style.display = "block";
-    document.getElementById("welcome").innerText = "Здравствуйте, " + allData.users[u].name;
-    if (currentRole === "admin" || currentRole === "superadmin") {
-      document.getElementById("admin-panel").style.display = "block";
+  if (!user || user.password !== password) {
+    errorBox.textContent = "Неверный логин или пароль";
+    return;
+  }
+
+  currentUser = login;
+  currentRole = user.role;
+  localStorage.setItem("currentUser", login);
+  showApp();
+}
+
+function showApp() {
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+
+  const user = data.users[currentUser];
+  const isAdmin = user.role === "admin";
+  const isSuper = user.role === "superadmin";
+
+  document.getElementById("userTitle").textContent =
+    isSuper ? "Добро пожаловать, супер-админ" :
+    isAdmin ? "Добро пожаловать, воспитатель" :
+    `Дневник: ${user.name}`;
+
+  if (isAdmin || isSuper) {
+    const selector = document.getElementById("selectChild");
+    selector.innerHTML = "";
+    for (let key in data.users) {
+      if (data.users[key].role === "parent") {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = data.users[key].name;
+        selector.appendChild(opt);
+      }
     }
-    renderVisits();
+    document.getElementById("childSelector").classList.remove("hidden");
+    selector.onchange = () => renderChild(selector.value, true);
+    selector.dispatchEvent(new Event("change"));
+
+    if (isSuper) {
+      document.getElementById("userManagement").classList.remove("hidden");
+      renderUserList();
+    }
   } else {
-    document.getElementById("login-error").innerText = "Неверный логин или пароль!";
+    document.getElementById("childSelector").classList.add("hidden");
+    renderChild(currentUser, false);
   }
 }
 
-// Выход
-function logout() {
-  currentUser = null;
-  document.getElementById("diary-screen").style.display = "none";
-  document.getElementById("login-screen").style.display = "block";
-}
+function renderChild(login, editable) {
+  const user = data.users[login];
+  document.getElementById("childCard").classList.remove("hidden");
+  document.getElementById("childName").textContent = user.name;
+  document.getElementById("childSurname").textContent = user.surname || "-";
+  document.getElementById("childPatronymic").textContent = user.patronymic || "-";
+  document.getElementById("childDOB").textContent = user.dob || "-";
+  document.getElementById("adminForm").classList.toggle("hidden", !editable);
+  document.getElementById("editChildBtn").classList.toggle("hidden", !editable);
 
-// Добавление посещения
-async function addVisit() {
-  const now = new Date().toLocaleString();
-  const v = {
-    date: now,
-    посещение: parseInt(document.getElementById("visit").value || 0),
-    активность: parseInt(document.getElementById("activity").value || 0),
-    поведение: parseInt(document.getElementById("behavior").value || 0),
-    стих: parseInt(document.getElementById("poem").value || 0)
+  const form = document.getElementById("visitForm");
+  form.onsubmit = async function(e) {
+    e.preventDefault();
+    const date = document.getElementById("visitDate").value;
+    const grades = [
+      document.getElementById("gradeVisit").checked ? 1 : 0,
+      document.getElementById("gradeActivity").checked ? 1 : 0,
+      document.getElementById("gradeBehavior").checked ? 1 : 0,
+      document.getElementById("gradePoem").checked ? 1 : 0
+    ];
+    const sum = grades.reduce((a, b) => a + b, 0);
+    const gradesText = `x${sum}: посещение: ${grades[0]}, активность: ${grades[1]}, поведение: ${grades[2]}, стих: ${grades[3]}`;
+    const addedAt = new Date().toLocaleString();
+
+    if (!data.visits[login]) data.visits[login] = [];
+    data.visits[login].push({ date, grades: gradesText, addedAt });
+    await saveData();
+    renderVisits(login);
+    form.reset();
   };
 
-  if (!allData.visits[currentUser]) allData.visits[currentUser] = [];
-  allData.visits[currentUser].push(v);
-  await saveData();
-  renderVisits();
+  renderVisits(login);
 }
 
-// Отображение
-function renderVisits() {
-  const container = document.getElementById("visits");
-  container.innerHTML = "<h3>Журнал посещений</h3>";
-  const visits = allData.visits[currentUser] || [];
-  visits.forEach(v => {
-    const sum = v.посещение + v.активность + v.поведение + v.стих;
-    container.innerHTML += `
-      <div class="visit-entry">
-        <b>${v.date}</b><br>
-        Посещение: ${v.посещение}, Активность: ${v.активность}, Поведение: ${v.поведение}, Стих: ${v.стих}<br>
-        Сумма: ${sum}
-      </div>`;
+function renderVisits(login) {
+  const thead = document.querySelector("#visitsTable thead");
+  const tbody = document.querySelector("#visitsTable tbody");
+  thead.innerHTML = "<tr><th>Дата</th><th>Оценки</th><th>Внесено</th><th></th></tr>";
+  tbody.innerHTML = "";
+  let total = 0;
+  const visits = data.visits[login] || [];
+  visits.forEach((v, i) => {
+    const row = document.createElement("tr");
+    const del = (currentRole === "superadmin") ? `<td><button onclick=\"deleteVisit('${login}',${i})\">✖</button></td>` : "<td></td>";
+    const numbers = v.grades.match(/\d+/g)?.map(Number) || [];
+    const sum = numbers.slice(-4).reduce((s, n) => s + n, 0);
+    total += sum;
+    row.innerHTML = `
+      <td>${v.date}</td>
+      <td>${v.grades}</td>
+      <td>${v.addedAt || "-"}</td>
+      ${del}`;
+    tbody.appendChild(row);
   });
+  const summary = document.createElement("tr");
+  summary.innerHTML = `<td colspan="4"><strong>Сумма всех баллов: ${total}</strong></td>`;
+  tbody.appendChild(summary);
+  document.getElementById("childScore").textContent = total;
 }
+
+async function deleteVisit(login, index) {
+  if (!confirm("Удалить эту запись?")) return;
+  data.visits[login].splice(index, 1);
+  await saveData();
+  renderVisits(login);
+}
+
+function logout() {
+  localStorage.removeItem("currentUser");
+  location.reload();
+}
+
+window.onload = async () => {
+  await loadData();
+  const saved = localStorage.getItem("currentUser");
+  if (saved && data.users[saved]) {
+    currentUser = saved;
+    currentRole = data.users[saved].role;
+    showApp();
+  }
+};

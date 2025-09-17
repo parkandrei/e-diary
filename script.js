@@ -1,5 +1,5 @@
 // Замените API_URL на адрес вашего Replit
-const API_URL = "https://YOUR-REPL-URL/data.json"; 
+const API_URL = "https://acckids-parkandrei.replit.app/data.json"; 
 
 let currentUser = null;
 let currentRole = null;
